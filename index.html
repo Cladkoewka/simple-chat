@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fa;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+        #chat {
+            width: 100%;
+            max-width: 500px;
+            height: 300px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            padding: 10px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        #messageInput {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #nicknameInput {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 3px;
+            background-color: #f1f1f1;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple Chat</h1>
+    <div id="nicknameSection">
+        <input type="text" id="nicknameInput" placeholder="Enter your nickname..." />
+        <button onclick="setNickname()">Set Nickname</button>
+    </div>
+    <div id="chat"></div>
+    
+    <div id="messageSection" style="display:none;">
+        <input type="text" id="messageInput" placeholder="Type a message..." style="margin-right: 1rem;"/>
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        let socket;
+        let nickname;
+
+        function setNickname() {
+            nickname = document.getElementById('nicknameInput').value.trim();
+            if (nickname) {
+                document.getElementById('nicknameSection').style.display = 'none';
+                document.getElementById('messageSection').style.display = 'flex';
+                connectToWebSocket();
+            } else {
+                alert("Please enter a valid nickname.");
+            }
+        }
+
+        function connectToWebSocket() {
+            // Connect to WebSocket server
+            socket = new WebSocket('ws://localhost:8080/ws');
+
+            socket.onopen = function() {
+                console.log('Connected to WebSocket server');
+                socket.send(nickname); 
+            };
+
+            socket.onmessage = function(event) {
+                const chat = document.getElementById('chat');
+                const newMessage = document.createElement('div');
+                newMessage.classList.add('message');
+                newMessage.textContent = event.data;
+                chat.appendChild(newMessage);
+                chat.scrollTop = chat.scrollHeight; 
+            };
+
+            socket.onerror = function(error) {
+                console.error('WebSocket error:', error);
+            };
+
+            socket.onclose = function() {
+                console.log('WebSocket connection closed');
+            };
+        }
+
+        function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            if (message && nickname) {
+                socket.send(message);
+                messageInput.value = ''; 
+            }
+        }
+    </script>
+</body>
+</html>
